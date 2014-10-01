@@ -1,5 +1,7 @@
 package be.vdab.web;
 
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
 import javax.servlet.ServletRegistration.Dynamic;
 
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
@@ -13,7 +15,7 @@ public class Initializer extends AbstractAnnotationConfigDispatcherServletInitia
 
 	@Override
 	protected Class<?>[] getServletConfigClasses() {
-		return null;
+		return new Class<?>[] {CreateControllerBeans.class};
 	}
 
 	@Override
@@ -26,4 +28,9 @@ public class Initializer extends AbstractAnnotationConfigDispatcherServletInitia
 		registration.setInitParameter("dispatchOptionsRequest", "true");
 	}
 	
+	@Override
+	public void onStartup(ServletContext context) throws ServletException {
+		context.setAttribute("contextPath", context.getContextPath());
+		super.onStartup(context);
+	}
 }

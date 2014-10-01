@@ -1,43 +1,35 @@
 package be.vdab.web;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationListener;
-import org.springframework.messaging.core.MessageSendingOperations;
-import org.springframework.messaging.simp.broker.BrokerAvailabilityEvent;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import be.vdab.entities.Bedrag;
+import be.vdab.entities.ToeTevoegenBedrag;
 
 @Controller
 @RequestMapping("/")
-public class GoedeDoelControler implements ApplicationListener<BrokerAvailabilityEvent>{
-	private final MessageSendingOperations<String> messagingTemplate;
-	private AtomicBoolean brokerAvailable = new AtomicBoolean();
-	private Bedrag bedrag;
-	
-	@Autowired
-	public GoedeDoelControler(MessageSendingOperations<String> messagingTemplate, Bedrag bedrag) {
-		this.messagingTemplate = messagingTemplate;
-		this.bedrag = bedrag;
-	}
+public class GoedeDoelControler{
+	private Bedrag bedrag = new Bedrag();
 
-	@Override
-	public void onApplicationEvent(BrokerAvailabilityEvent event) {
-		this.brokerAvailable.set(event.isBrokerAvailable());
+
+	@RequestMapping(method = RequestMethod.GET)
+	public String toPage(){
+		return "index";
 	}
 	
-	@Scheduled(fixedDelay=2000)
-	public void sendCurrentAmount(){
-		long amount = 0;
-		messagingTemplate.convertAndSend("/topic/amount", amount);
+	@MessageMapping("/stort")
+	@SendTo("/topic/amount")
+	public long getBedrag(ToeTevoegenBedrag tevoegenBedrag){
+		bedrag.addAmount(tevoegenBedrag.getBedrag());
+		return bedrag.getAmount();
 	}
-
-	@RequestMapping()
-	public String getBedrag(){
-		return null;
+	
+	@SubscribeMapping("/load")
+	public long getBedragEersteLoad(){
+		return bedrag.getAmount();
 	}
 }

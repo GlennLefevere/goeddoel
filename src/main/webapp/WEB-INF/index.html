@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Goede doel</title>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.1/themes/smoothness/jquery-ui.css" />
+<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.1/jquery-ui.min.js"></script>
+<script src="scripts/sockjs-0.3.4.js"></script>
+<script src="scripts/stomp.js"></script>
+<script>
+var stompClient = null;
+	$(window).on("load", function() {
+		var socket = new SockJS('/GoedDoel/goeddoel');
+		stompClient = Stomp.over(socket);
+		stompClient.connect({}, function(frame) {
+			console.log('Connected: ' + frame);
+			stompClient.subscribe('/topic/amount', function(amount) {
+				showAmount(amount.body);
+			});
+			stompClient.subscribe("/app/load", function(amount){
+				showAmount(amount.body);
+			});
+		});
+	});
+	$(document).ready(function() {
+		$("#Doneer").on("click", function() {
+			var waarde = $("#storten").val();
+			stompClient.send("/app/stort", {}, JSON.stringify({
+				"bedrag" : waarde
+			}))
+		});
+	});
+	
+	$(window).on("unload", function(){
+		stompClient.disconnect();
+	});
+	
+	function showAmount(amount) {
+		$("#bedrag").text(amount);
+	}
+</script>
+</head>
+<body>
+	<p id="bedrag"></p>
+	<input type="text" id="storten">
+	<button id="Doneer">Doneer</button>
+</body>
+</html>
